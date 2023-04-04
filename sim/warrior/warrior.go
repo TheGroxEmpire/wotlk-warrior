@@ -78,6 +78,7 @@ type Warrior struct {
 	ConcussionBlow       *core.Spell
 	Bladestorm           *core.Spell
 	BladestormOH         *core.Spell
+	Yogg0LTrinket        *core.Spell
 
 	HeroicStrikeOrCleave     *core.Spell
 	HSOrCleaveQueueAura      *core.Aura
@@ -98,6 +99,10 @@ type Warrior struct {
 	TraumaAuras            []*core.Aura
 	SunderArmorAuras       core.AuraArray
 	ThunderClapAuras       core.AuraArray
+
+	CrusherTentacle     *TentaclePet
+	CorruptorTentacle   *TentaclePet
+	ConstrictorTentacle *TentaclePet
 }
 
 func (warrior *Warrior) GetCharacter() *core.Character {
@@ -151,6 +156,7 @@ func (warrior *Warrior) Initialize() {
 	warrior.registerWhirlwindSpell()
 	warrior.registerShockwaveSpell()
 	warrior.registerConcussionBlowSpell()
+	warrior.registerYogg0LTrinketCD()
 
 	warrior.SunderArmor = warrior.newSunderArmorSpell(false)
 	warrior.SunderArmorDevastate = warrior.newSunderArmorSpell(true)
@@ -193,6 +199,10 @@ func NewWarrior(character core.Character, talents string, inputs WarriorInputs) 
 	// Base dodge unaffected by Diminishing Returns
 	warrior.PseudoStats.BaseDodge += 0.03664
 	warrior.PseudoStats.BaseParry += 0.05
+
+	warrior.CrusherTentacle = warrior.NewCrusherTentacle()
+	warrior.CorruptorTentacle = warrior.NewCorruptorTentacle()
+	warrior.ConstrictorTentacle = warrior.NewConstrictorTentacle()
 
 	return warrior
 }
