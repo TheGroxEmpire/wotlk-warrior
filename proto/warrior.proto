@@ -227,6 +227,7 @@ message Warrior {
 		WarriorShout shout = 3;
 		bool munch = 5;
 		bool stance_snapshot = 6;
+		int32 latency_ms = 7;
 	}
 	Options options = 3;
 }

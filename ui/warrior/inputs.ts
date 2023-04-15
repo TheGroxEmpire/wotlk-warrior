@@ -43,6 +43,12 @@ export const StartingRage = InputHelpers.makeSpecOptionsNumberInput<Spec.SpecWar
 	labelTooltip: 'Initial rage at the start of each iteration.',
 });
 
+export const LatencyMs = InputHelpers.makeSpecOptionsNumberInput<Spec.SpecWarrior>({
+	fieldName: 'latencyMs',
+	label: 'Latency (ms)',
+	labelTooltip: 'Player latency, in milliseconds. Adds a delay to actions that cannot be spell queued.',
+});
+
 export const Munch = InputHelpers.makeSpecOptionsBooleanInput<Spec.SpecWarrior>({
 	fieldName: 'munch',
 	label: 'Munching',

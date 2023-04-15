@@ -26,7 +26,13 @@ func (war *DpsWarrior) OnGCDReady(sim *core.Simulation) {
 		war.doRotation(sim)
 	}
 
-	if war.GCD.IsReady(sim) && !war.IsWaiting() {
+	if !war.GCD.IsReady(sim) {
+		nextGcd := war.NextGCDAt()
+		war.DoNothing()
+		war.CancelGCDTimer(sim)
+
+		war.NextRotationAction(sim, nextGcd)
+	} else if war.GCD.IsReady(sim) && !war.IsWaiting() {
 		// This means we did nothing
 		war.DoNothing()
 	}
@@ -34,6 +40,20 @@ func (war *DpsWarrior) OnGCDReady(sim *core.Simulation) {
 
 func (war *DpsWarrior) OnAutoAttack(sim *core.Simulation, spell *core.Spell) {
 	war.tryQueueHsCleave(sim)
+}
+
+func (war *DpsWarrior) NextRotationAction(sim *core.Simulation, kickAt time.Duration) {
+	if war.rotationAction != nil {
+		war.rotationAction.Cancel(sim)
+	}
+
+	war.rotationAction = &core.PendingAction{
+		Priority:     core.ActionPriorityGCD,
+		OnAction:     war.OnGCDReady,
+		NextActionAt: kickAt,
+	}
+
+	sim.AddPendingAction(war.rotationAction)
 }
 
 func (war *DpsWarrior) doRotation(sim *core.Simulation) {

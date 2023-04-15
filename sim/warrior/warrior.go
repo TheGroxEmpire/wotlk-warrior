@@ -19,6 +19,7 @@ type WarriorInputs struct {
 	BloodsurgeDurationThreshold time.Duration
 	Munch                       bool
 	StanceSnapshot              bool
+	Latency                     time.Duration
 }
 
 const (

@@ -39,7 +39,8 @@ type DpsWarrior struct {
 	maintainSunder  bool
 	thunderClapNext bool
 
-	castSlamAt time.Duration
+	castSlamAt     time.Duration
+	rotationAction *core.PendingAction
 }
 
 func NewDpsWarrior(character core.Character, options *proto.Player) *DpsWarrior {
@@ -52,6 +53,7 @@ func NewDpsWarrior(character core.Character, options *proto.Player) *DpsWarrior 
 			BloodsurgeDurationThreshold: core.DurationFromSeconds(warOptions.Rotation.BloodsurgeDurationThreshold),
 			Munch:                       warOptions.Options.Munch,
 			StanceSnapshot:              warOptions.Options.StanceSnapshot,
+			Latency:                     time.Duration(core.MaxInt32(warOptions.Options.LatencyMs, 0)) * time.Millisecond,
 		}),
 		Rotation: warOptions.Rotation,
 		Options:  warOptions.Options,
