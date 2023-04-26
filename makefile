@@ -193,6 +193,9 @@ release: wowsimwotlk wowsimwotlk-windows.exe
 	zip wowsimcli-amd64-linux.zip wowsimcli-amd64-linux
 	zip wowsimcli-windows.exe.zip wowsimcli-windows.exe
 
+releaselib: wowsimwotlk
+	GOOS=windows GOARCH=amd64 GOAMD64=v2 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc go build -buildmode=c-shared -o wowsimwotlk-windows.dll ./lib/library.go
+
 sim/core/proto/api.pb.go: proto/*.proto
 	protoc -I=./proto --go_out=./sim/core ./proto/*.proto
 
