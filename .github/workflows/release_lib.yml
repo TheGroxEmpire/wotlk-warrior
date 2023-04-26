@@ -53,5 +53,8 @@ jobs:
           replacesArtifacts: true
           artifactErrorsFailBuild: true
           artifacts: |
+<<<<<<< HEAD
             wowsimwotlk-linux.so
+=======
+>>>>>>> f632d5460 (Add a windows shared library build)
             wowsimwotlk-windows.dll

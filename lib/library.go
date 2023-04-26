@@ -1,5 +1,6 @@
 package main
 
+<<<<<<< HEAD
 // #include <stdlib.h>
 import "C"
 import (
@@ -14,10 +15,20 @@ import (
 )
 
 var _default_rsr = proto.RaidSimRequest{
+=======
+import "C"
+import (
+	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
+)
+
+var DEFAULT_RSR = proto.RaidSimRequest{
+>>>>>>> f632d5460 (Add a windows shared library build)
 	Raid:       &proto.Raid{},
 	Encounter:  &proto.Encounter{},
 	SimOptions: &proto.SimOptions{},
 }
+<<<<<<< HEAD
 var _active_sim = core.NewSim(&_default_rsr)
 var _active_seed int64 = 1
 var _aura_labels = []string{}
@@ -209,5 +220,9 @@ func cleanup() {
 func FreeCString(s *C.char) {
 	C.free(unsafe.Pointer(s))
 }
+=======
+
+var SIM = core.NewSim(&DEFAULT_RSR)
+>>>>>>> f632d5460 (Add a windows shared library build)
 
 func main() {}
