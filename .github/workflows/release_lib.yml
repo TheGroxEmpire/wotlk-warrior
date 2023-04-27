@@ -53,4 +53,5 @@ jobs:
           replacesArtifacts: true
           artifactErrorsFailBuild: true
           artifacts: |
+            wowsimwotlk-linux.so
             wowsimwotlk-windows.dll
