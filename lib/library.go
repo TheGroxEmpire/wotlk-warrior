@@ -12,6 +12,11 @@ var DEFAULT_RSR = proto.RaidSimRequest{
 	SimOptions: &proto.SimOptions{},
 }
 
-var SIM = core.NewSim(&DEFAULT_RSR)
+// export run
+func run() bool {
+	sim := core.NewSim(&DEFAULT_RSR)
+	sim.Reset()
+	return true
+}
 
 func main() {}
