@@ -1,7 +1,9 @@
 package main
 
+// #include <stdlib.h>
 import "C"
 import (
+	"encoding/json"
 	"log"
 	"unsafe"
 
@@ -161,11 +163,31 @@ func getDamageDone() float64 {
 	spellbook := player.GetCharacter().Spellbook
 	totalDamage := 0.0
 	for _, spell := range spellbook {
-		for _, targetMetrics := range spell.SpellMetrics {
-			totalDamage += targetMetrics.TotalDamage
+		for _, metrics := range spell.SpellMetrics {
+			totalDamage += metrics.TotalDamage
 		}
 	}
 	return totalDamage
+}
+
+//export getSpellMetrics
+func getSpellMetrics() *C.char {
+	all_metrics := make(map[int32][]core.SpellMetrics)
+	player := _active_sim.Raid.Parties[0].Players[0]
+	spellbook := player.GetCharacter().Spellbook
+	for _, spell := range spellbook {
+		spell_id := spell.ActionID.SpellID
+		for _, metrics := range spell.SpellMetrics {
+			if metrics.Casts > 0 {
+				all_metrics[spell_id] = append(all_metrics[spell_id], metrics)
+			}
+		}
+	}
+	out, err := json.Marshal(all_metrics)
+	if err != nil {
+		panic(err)
+	}
+	return C.CString(string(out))
 }
 
 //export step
@@ -181,6 +203,11 @@ func needsInput() bool {
 //export cleanup
 func cleanup() {
 	_active_sim.Cleanup()
+}
+
+//export FreeCString
+func FreeCString(s *C.char) {
+	C.free(unsafe.Pointer(s))
 }
 
 func main() {}
