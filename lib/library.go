@@ -59,7 +59,7 @@ func trySpell(act int) bool {
 }
 
 //export doNothing
-func doNothing(act int) bool {
+func doNothing() bool {
 	player := _active_sim.Raid.Parties[0].Players[0]
 	player.GetCharacter().DoNothing()
 	return true
