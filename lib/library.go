@@ -81,6 +81,15 @@ func getEnergy() float64 {
 	return player.GetCharacter().CurrentEnergy()
 }
 
+//export getRage
+func getRage() float64 {
+	player := _active_sim.Raid.Parties[0].Players[0]
+	if !player.GetCharacter().HasRageBar() {
+		return 0.0
+	}
+	return player.GetCharacter().CurrentRage()
+}
+
 //export getComboPoints
 func getComboPoints() int {
 	player := _active_sim.Raid.Parties[0].Players[0]
