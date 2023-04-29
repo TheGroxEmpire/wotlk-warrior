@@ -1,0 +1,57 @@
+name: Release shared library
+
+on:
+  push:
+    branches:
+      - AI
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install gcc
+        run: sudo apt-get install -y mingw-w64
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18.x
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Protoc Go plugin
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '19'
+
+      - name: Checkout
+        uses: actions/checkout@v2.3.1
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      
+      - name: Build
+        run: |
+          make clean && make releaselib
+      
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          commit: AI
+          tag: v0.1
+          generateReleaseNotes: true
+          makeLatest: true
+          allowUpdates: true
+          replacesArtifacts: true
+          artifactErrorsFailBuild: true
+          artifacts: |
+            wowsimwotlk-linux.so
+            wowsimwotlk-windows.dll
