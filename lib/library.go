@@ -53,8 +53,7 @@ func trySpell(act int) bool {
 	if spell.CanCast(_active_sim, target) {
 		casted = spell.Cast(_active_sim, target)
 	}
-	if casted {
-		// TODO: Only reset if this spell consumed a global
+	if casted && spell.CurCast.GCD > 0 {
 		_active_sim.NeedsInput = false
 	}
 	return casted
