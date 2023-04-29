@@ -379,7 +379,10 @@ func (character *Character) initialize(agent Agent) {
 			}
 
 			if sim.Options.Interactive {
-				sim.NeedsInput = true
+				if character.GCD.IsReady(sim) {
+					sim.NeedsInput = true
+					character.doNothing = false
+				}
 				return
 			}
 
