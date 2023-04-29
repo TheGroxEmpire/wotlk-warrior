@@ -12,6 +12,10 @@ ui/*/index.html
 dist
 binary_dist
 sim/web/__debug_bin
+wowsimwotlk-linux.h
+wowsimwotlk-linux.so
+wowsimwotlk-windows.dll
+wowsimwotlk-windows.h
 
 # temporary files
 *.results.tmp
