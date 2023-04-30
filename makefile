@@ -200,6 +200,11 @@ releaselib: wowsimwotlk
 sim/core/proto/api.pb.go: proto/*.proto
 	protoc -I=./proto --go_out=./sim/core ./proto/*.proto
 
+.PHONY: lib
+lib:
+	protoc -I=./proto --go_out=./sim/core ./proto/*.proto
+	go build -buildmode=c-shared -o wowsimwotlk-mac.so ./lib/library.go
+
 .PHONY: items
 items: sim/core/items/all_items.go sim/core/proto/api.pb.go
 
