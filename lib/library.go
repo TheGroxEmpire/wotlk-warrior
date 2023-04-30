@@ -127,6 +127,19 @@ func getSpells(storage *int32, n int32) {
 	}
 }
 
+//export getCooldowns
+func getCooldowns(storage *float64, spellbookIndices *int32, n int32) {
+	player := _active_sim.Raid.Parties[0].Players[0]
+	spellbook := player.GetCharacter().Spellbook
+	spells := unsafe.Slice(spellbookIndices, n)
+	cds := unsafe.Slice(storage, n)
+	for i := int32(0); i < n; i++ {
+		spellbookIndex := spells[i]
+		spell := spellbook[spellbookIndex]
+		cds[i] = spell.TimeToReady(_active_sim).Seconds()
+	}
+}
+
 //export registerAuras
 func registerAuras(strings **C.char) {
 	_aura_labels = []string{}
