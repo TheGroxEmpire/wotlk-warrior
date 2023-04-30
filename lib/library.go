@@ -52,6 +52,10 @@ func trySpell(act int) bool {
 	casted := false
 	if spell.CanCast(_active_sim, target) {
 		casted = spell.Cast(_active_sim, target)
+		// Hacky solution to Whirlwind OH
+		if act == 1680 {
+			spells[44949].Cast(_active_sim, target)
+		}
 	}
 	if casted && spell.CurCast.GCD > 0 {
 		_active_sim.NeedsInput = false
@@ -69,6 +73,11 @@ func doNothing() bool {
 //export getRemainingDuration
 func getRemainingDuration() float64 {
 	return _active_sim.GetRemainingDuration().Seconds()
+}
+
+//export getCurrentTime
+func getCurrentTime() float64 {
+	return _active_sim.CurrentTime.Seconds()
 }
 
 //export getEnergy

@@ -10,6 +10,7 @@ import (
 type ApplySpellResults func(sim *Simulation, target *Unit, spell *Spell)
 type ExpectedDamageCalculator func(sim *Simulation, target *Unit, spell *Spell, useSnapshot bool) *SpellResult
 type CanCastCondition func(sim *Simulation, target *Unit) bool
+type CastStartAction func(sim *Simulation, target *Unit)
 
 type SpellConfig struct {
 	// See definition of Spell (below) for comments on these.
@@ -29,6 +30,7 @@ type SpellConfig struct {
 
 	Cast               CastConfig
 	ExtraCastCondition CanCastCondition
+	OnCastStart        CastStartAction
 
 	BonusHitRating       float64
 	BonusCritRating      float64
@@ -83,6 +85,7 @@ type Spell struct {
 	CD                 Cooldown
 	SharedCD           Cooldown
 	ExtraCastCondition CanCastCondition
+	OnCastStart        CastStartAction
 
 	// Performs a cast of this spell.
 	castFn CastSuccessFunc
@@ -164,6 +167,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		CD:                 config.Cast.CD,
 		SharedCD:           config.Cast.SharedCD,
 		ExtraCastCondition: config.ExtraCastCondition,
+		OnCastStart:        config.OnCastStart,
 
 		ApplyEffects: config.ApplyEffects,
 
@@ -443,6 +447,10 @@ func (spell *Spell) CanCast(sim *Simulation, target *Unit) bool {
 func (spell *Spell) Cast(sim *Simulation, target *Unit) bool {
 	if target == nil {
 		target = spell.Unit.CurrentTarget
+	}
+
+	if spell.OnCastStart != nil {
+		spell.OnCastStart(sim, target)
 	}
 	return spell.castFn(sim, target)
 }

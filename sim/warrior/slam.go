@@ -31,6 +31,10 @@ func (warrior *Warrior) registerSlamSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  140,
 
+		OnCastStart: func(sim *core.Simulation, target *core.Unit) {
+			warrior.AutoAttacks.DelayMeleeBy(sim, warrior.Slam.CurCast.CastTime)
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := 250 +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
@@ -45,18 +49,10 @@ func (warrior *Warrior) registerSlamSpell() {
 }
 
 func (warrior *Warrior) ShouldInstantSlam(sim *core.Simulation) bool {
-	return warrior.CurrentRage() >= warrior.Slam.DefaultCast.Cost && warrior.Slam.IsReady(sim) && warrior.isBloodsurgeActive() &&
-		sim.CurrentTime > (warrior.lastBloodsurgeProc+warrior.reactionTime) && warrior.GCD.IsReady(sim)
+	return warrior.Slam.CanCast(sim, warrior.CurrentTarget) && warrior.isBloodsurgeActive() &&
+		sim.CurrentTime > (warrior.lastBloodsurgeProc+warrior.reactionTime)
 }
 
 func (warrior *Warrior) ShouldSlam(sim *core.Simulation) bool {
-	return warrior.CurrentRage() >= warrior.Slam.DefaultCast.Cost && warrior.Slam.IsReady(sim) && warrior.Talents.ImprovedSlam > 0
-}
-
-func (warrior *Warrior) CastSlam(sim *core.Simulation, target *core.Unit) bool {
-	if !warrior.Slam.Cast(sim, target) {
-		return false
-	}
-	warrior.AutoAttacks.DelayMeleeBy(sim, warrior.Slam.CurCast.CastTime)
-	return true
+	return warrior.Slam.CanCast(sim, warrior.CurrentTarget) && warrior.Talents.ImprovedSlam > 0
 }

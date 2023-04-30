@@ -8,25 +8,38 @@ import (
 )
 
 func (warrior *Warrior) registerWhirlwindSpell() {
-	actionID := core.ActionID{SpellID: 1680}
 	numHits := core.MinInt32(4, warrior.Env.GetNumTargets())
 	results := make([]*core.SpellResult, numHits)
 
-	if warrior.AutoAttacks.IsDualWielding && warrior.GetOHWeapon().WeaponType != proto.WeaponType_WeaponTypeStaff &&
-		warrior.GetOHWeapon().WeaponType != proto.WeaponType_WeaponTypePolearm {
-		warrior.WhirlwindOH = warrior.RegisterSpell(core.SpellConfig{
-			ActionID:    actionID,
-			SpellSchool: core.SpellSchoolPhysical,
-			ProcMask:    core.ProcMaskEmpty, // whirlwind offhand hits usually don't proc auras
-			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete | SpellFlagWhirlwindOH,
+	warrior.WhirlwindOH = warrior.RegisterSpell(core.SpellConfig{
+		ActionID:    core.ActionID{SpellID: 44949},
+		SpellSchool: core.SpellSchoolPhysical,
+		ProcMask:    core.ProcMaskEmpty, // whirlwind offhand hits usually don't proc auras
+		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete | SpellFlagWhirlwindOH,
 
-			DamageMultiplier: 1 *
-				(1 + 0.02*float64(warrior.Talents.UnendingFury) + 0.1*float64(warrior.Talents.ImprovedWhirlwind)) *
-				(1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
-			CritMultiplier:   warrior.critMultiplier(oh),
-			ThreatMultiplier: 1.25,
-		})
-	}
+		DamageMultiplier: 1 *
+			(1 + 0.02*float64(warrior.Talents.UnendingFury) + 0.1*float64(warrior.Talents.ImprovedWhirlwind)) *
+			(1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
+		CritMultiplier:   warrior.critMultiplier(oh),
+		ThreatMultiplier: 1.25,
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			curTarget := target
+			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
+				baseDamage := 0 +
+					spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
+					spell.BonusWeaponDamage()
+				results[hitIndex] = warrior.WhirlwindOH.CalcDamage(sim, curTarget, baseDamage, warrior.WhirlwindOH.OutcomeMeleeWeaponSpecialHitAndCrit)
+
+				curTarget = sim.Environment.NextTargetUnit(curTarget)
+			}
+
+			curTarget = target
+			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
+				warrior.WhirlwindOH.DealDamage(sim, results[hitIndex])
+				curTarget = sim.Environment.NextTargetUnit(curTarget)
+			}
+		},
+	})
 
 	warrior.Whirlwind = warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 1680},
@@ -70,22 +83,9 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
 			}
 
-			if warrior.WhirlwindOH != nil {
-				curTarget = target
-				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-					baseDamage := 0 +
-						spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-						spell.BonusWeaponDamage()
-					results[hitIndex] = warrior.WhirlwindOH.CalcDamage(sim, curTarget, baseDamage, warrior.WhirlwindOH.OutcomeMeleeWeaponSpecialHitAndCrit)
-
-					curTarget = sim.Environment.NextTargetUnit(curTarget)
-				}
-
-				curTarget = target
-				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-					warrior.WhirlwindOH.DealDamage(sim, results[hitIndex])
-					curTarget = sim.Environment.NextTargetUnit(curTarget)
-				}
+			if warrior.AutoAttacks.IsDualWielding && warrior.GetOHWeapon().WeaponType != proto.WeaponType_WeaponTypeStaff &&
+				warrior.GetOHWeapon().WeaponType != proto.WeaponType_WeaponTypePolearm {
+				warrior.WhirlwindOH.Cast(sim, target)
 			}
 		},
 	})
