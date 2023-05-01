@@ -275,20 +275,7 @@ func (sim *Simulation) run() *proto.RaidSimResult {
 	// 	fmt.Printf(fmt.Sprintf("[%0.1f] "+message+"\n", append([]interface{}{sim.CurrentTime.Seconds()}, vals...)...))
 	// }
 
-	for _, target := range sim.Encounter.Targets {
-		target.init(sim)
-	}
-
-	for _, party := range sim.Raid.Parties {
-		for _, player := range party.Players {
-			character := player.GetCharacter()
-			character.init(sim, player)
-
-			for _, petAgent := range character.Pets {
-				petAgent.GetCharacter().init(sim, petAgent)
-			}
-		}
-	}
+	sim.Init()
 
 	sim.runOnce()
 	firstIterationDuration := sim.Duration
