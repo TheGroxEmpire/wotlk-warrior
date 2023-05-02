@@ -67,12 +67,22 @@ func trySpell(act int) bool {
 	spell := spells[act]
 	target := player.GetCharacter().CurrentTarget
 	casted := false
+	if spell.ActionID.SpellID == 47450 {
+		aura := player.GetCharacter().GetAura("HS Queue Aura")
+		if aura.IsActive() {
+			return false
+		}
+		aura.Activate(_active_sim)
+		return true
+	}
+
 	if spell.CanCast(_active_sim, target) {
 		casted = spell.Cast(_active_sim, target)
+		if casted && spell.CurCast.GCD > 0 {
+			_active_sim.NeedsInput = false
+		}
 	}
-	if casted {
-		_active_sim.NeedsInput = false
-	}
+
 	return casted
 }
 
@@ -88,6 +98,11 @@ func getRemainingDuration() float64 {
 	return _active_sim.GetRemainingDuration().Seconds()
 }
 
+//export getCurrentTime
+func getCurrentTime() float64 {
+	return _active_sim.CurrentTime.Seconds()
+}
+
 //export getEnergy
 func getEnergy() float64 {
 	player := _active_sim.Raid.Parties[0].Players[0]
@@ -95,6 +110,15 @@ func getEnergy() float64 {
 		return 0.0
 	}
 	return player.GetCharacter().CurrentEnergy()
+}
+
+//export getRage
+func getRage() float64 {
+	player := _active_sim.Raid.Parties[0].Players[0]
+	if !player.GetCharacter().HasRageBar() {
+		return 0.0
+	}
+	return player.GetCharacter().CurrentRage()
 }
 
 //export getComboPoints

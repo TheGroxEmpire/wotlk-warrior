@@ -138,9 +138,7 @@ func (rb *rageBar) AddRage(sim *Simulation, amount float64, metrics *ResourceMet
 	}
 
 	rb.currentRage = newRage
-	if !sim.Options.Interactive {
-		rb.onRageGain(sim)
-	}
+	rb.onRageGain(sim)
 }
 
 func (rb *rageBar) SpendRage(sim *Simulation, amount float64, metrics *ResourceMetrics) {

@@ -98,12 +98,10 @@ func (warrior *Warrior) QueueHSOrCleave(sim *core.Simulation) {
 		return
 	}
 	warrior.HSOrCleaveQueueAura.Activate(sim)
-	warrior.PseudoStats.DisableDWMissPenalty = true
 }
 
 func (warrior *Warrior) DequeueHSOrCleave(sim *core.Simulation) {
 	warrior.HSOrCleaveQueueAura.Deactivate(sim)
-	warrior.PseudoStats.DisableDWMissPenalty = false
 }
 
 // Returns true if the regular melee swing should be used, false otherwise.
@@ -146,6 +144,13 @@ func (warrior *Warrior) RegisterHSOrCleave(useCleave bool, rageThreshold float64
 		Label:    "HS Queue Aura",
 		ActionID: warrior.HeroicStrikeOrCleave.ActionID,
 		Duration: core.NeverExpires,
+
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			warrior.PseudoStats.DisableDWMissPenalty = true
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			warrior.PseudoStats.DisableDWMissPenalty = false
+		},
 	})
 
 	warrior.HSRageThreshold = core.MaxFloat(warrior.HeroicStrikeOrCleave.DefaultCast.Cost, rageThreshold)

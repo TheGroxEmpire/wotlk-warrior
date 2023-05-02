@@ -69,6 +69,11 @@ func NewDpsWarrior(character core.Character, options *proto.Player) *DpsWarrior 
 	}
 
 	war.EnableRageBar(rbo, func(sim *core.Simulation) {
+		if sim.Options.Interactive {
+			sim.NeedsInput = true
+			return
+		}
+
 		if war.GCD.IsReady(sim) {
 			war.TryUseCooldowns(sim)
 			if war.GCD.IsReady(sim) {
