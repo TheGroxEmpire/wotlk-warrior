@@ -34,3 +34,8 @@ TestWarlock.results
 
 # air tmp dir
 tmp/
+
+# lib
+wowsimwotlk*.so
+wowsimwotlk*.dll
+wowsimwotlk*.h
