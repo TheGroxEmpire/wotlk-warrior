@@ -23,6 +23,23 @@ var _active_seed int64 = 1
 var _aura_labels = []string{}
 var _target_aura_labels = []string{}
 
+//export computeStats
+func computeStats(json *C.char) *C.char {
+	input := &proto.ComputeStatsRequest{}
+	jsonString := C.GoString(json)
+	err := protojson.Unmarshal([]byte(jsonString), input)
+	if err != nil {
+		log.Fatalf("failed to load input json file: %s", err)
+	}
+	sim.RegisterAll()
+	result := core.ComputeStats(input)
+	out, err := protojson.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+	return C.CString(string(out))
+}
+
 //export runSim
 func runSim(json *C.char) *C.char {
 	input := &proto.RaidSimRequest{}
@@ -98,6 +115,11 @@ func getRemainingDuration() float64 {
 	return _active_sim.GetRemainingDuration().Seconds()
 }
 
+//export getIterationDuration
+func getIterationDuration() float64 {
+	return _active_sim.Duration.Seconds()
+}
+
 //export getCurrentTime
 func getCurrentTime() float64 {
 	return _active_sim.CurrentTime.Seconds()
@@ -118,7 +140,7 @@ func getRage() float64 {
 	if !player.GetCharacter().HasRageBar() {
 		return 0.0
 	}
-	return player.GetCharacter().CurrentRage()
+	return player.GetCharacter().CurrentRage() / 100
 }
 
 //export getComboPoints
@@ -146,7 +168,12 @@ func getSpells(storage *int32, n int32) {
 	spellbook := player.GetCharacter().Spellbook
 	spells := unsafe.Slice(storage, n)
 	for i, spell := range spellbook[:n] {
-		spells[i] = spell.ActionID.SpellID
+		if spell.Tag != -1 {
+			spells[i] = spell.ActionID.SpellID
+		} else {
+			// These spells are not castable by the player
+			spells[i] = -1
+		}
 	}
 }
 
@@ -159,7 +186,8 @@ func getCooldowns(storage *float64, spellbookIndices *int32, n int32) {
 	for i := int32(0); i < n; i++ {
 		spellbookIndex := spells[i]
 		spell := spellbook[spellbookIndex]
-		cds[i] = spell.TimeToReady(_active_sim).Seconds()
+		cooldown := (spell.TimeToReady(_active_sim).Seconds() - _active_sim.CurrentTime.Seconds()) / spell.CD.Duration.Seconds()
+		cds[i] = core.MaxFloat(cooldown, 0.0)
 	}
 }
 
@@ -188,7 +216,8 @@ func getAuras(storage *float64, n int32) {
 	for i, label := range _aura_labels {
 		aura := player.GetCharacter().GetAura(label)
 		if aura != nil {
-			auras[i] = aura.RemainingDuration(_active_sim).Seconds()
+			duration := aura.RemainingDuration(_active_sim).Seconds() / aura.Duration.Seconds()
+			auras[i] = core.TernaryFloat64(duration >= 0.0, duration, 0.0)
 		} else {
 			auras[i] = 0.0
 		}
@@ -203,11 +232,34 @@ func getTargetAuras(storage *float64, n int32) {
 	for i, label := range _target_aura_labels {
 		aura := target.GetAura(label)
 		if aura != nil {
-			auras[i] = aura.RemainingDuration(_active_sim).Seconds()
+			duration := aura.RemainingDuration(_active_sim).Seconds() / aura.Duration.Seconds()
+			auras[i] = core.TernaryFloat64(duration >= 0.0, duration, 0.0)
 		} else {
 			auras[i] = 0.0
 		}
 	}
+}
+
+//export getMeleeSwingTime
+func getMeleeSwingTime(storage *float64) {
+	character := _active_sim.Raid.Parties[0].Players[0].GetCharacter()
+	// swingTime array will always be 2: MH, OH
+	swingTime := unsafe.Slice(storage, 2)
+	swingTime[0] = core.MinFloat(1.0,
+		(character.AutoAttacks.MainhandSwingAt.Seconds()-_active_sim.CurrentTime.Seconds())/character.AutoAttacks.MH.SwingDuration.Seconds())
+	if character.AutoAttacks.IsDualWielding {
+		swingTime[1] = core.MinFloat(1.0,
+			(character.AutoAttacks.OffhandSwingAt.Seconds()-_active_sim.CurrentTime.Seconds())/character.AutoAttacks.OH.SwingDuration.Seconds())
+	} else {
+		swingTime[1] = 0.0
+	}
+}
+
+//export getGcdReadyTime
+func getGcdReadyTime() float64 {
+	character := _active_sim.Raid.Parties[0].Players[0].GetCharacter()
+	GcdReadyAt := character.GCD.ReadyAt().Seconds()
+	return core.MinFloat(1.0, core.MaxFloat(-1.0, (GcdReadyAt-_active_sim.CurrentTime.Seconds())/core.GCDDefault.Seconds()))
 }
 
 //export getDamageDone
