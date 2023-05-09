@@ -3,6 +3,9 @@ package main
 // #include <stdlib.h>
 import "C"
 import (
+	"bytes"
+	"compress/zlib"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"unsafe"
@@ -11,6 +14,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"google.golang.org/protobuf/encoding/protojson"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 var _default_rsr = proto.RaidSimRequest{
@@ -40,17 +44,83 @@ func computeStats(json *C.char) *C.char {
 	return C.CString(string(out))
 }
 
-//export runSim
-func runSim(json *C.char) *C.char {
+//export encodeSettings
+func encodeSettings(json *C.char) *C.char {
 	input := &proto.RaidSimRequest{}
 	jsonString := C.GoString(json)
 	err := protojson.Unmarshal([]byte(jsonString), input)
 	if err != nil {
 		log.Fatalf("failed to load input json file: %s", err)
 	}
-	sim.RegisterAll()
-	result := core.RunSim(input, nil)
-	out, err := protojson.Marshal(result)
+	settings := &proto.IndividualSimSettings{
+		Settings: &proto.SimSettings{
+			Iterations: input.SimOptions.Iterations,
+		},
+		RaidBuffs:  input.Raid.Buffs,
+		Debuffs:    input.Raid.Debuffs,
+		Tanks:      input.Raid.Tanks,
+		PartyBuffs: input.Raid.Parties[0].Buffs,
+		Player:     input.Raid.Parties[0].Players[0],
+		Encounter:  input.Encounter,
+	}
+	var buffer bytes.Buffer
+	data, err := goproto.Marshal(settings)
+	if err != nil {
+		panic(err)
+	}
+	writer := zlib.NewWriter(&buffer)
+	writer.Write(data)
+	writer.Close()
+	out := base64.StdEncoding.EncodeToString(buffer.Bytes())
+	return C.CString(string(out))
+}
+
+//export getDatabase
+func getDatabase(itemIds *int32, numItems int32, enchantIds *int32, numEnchants int32, gemIds *int32, numGems int32) *C.char {
+	ids := unsafe.Slice(itemIds, numItems)
+	eids := unsafe.Slice(enchantIds, numEnchants)
+	gids := unsafe.Slice(gemIds, numGems)
+	simDB := &proto.SimDatabase{
+		Items:    make([]*proto.SimItem, numItems),
+		Enchants: make([]*proto.SimEnchant, numEnchants),
+		Gems:     make([]*proto.SimGem, numGems),
+	}
+	for i, itemId := range ids {
+		item := core.ItemsByID[itemId]
+		simDB.Items[i] = &proto.SimItem{
+			Id:               item.ID,
+			Name:             item.Name,
+			Type:             item.Type,
+			ArmorType:        item.ArmorType,
+			WeaponType:       item.WeaponType,
+			HandType:         item.HandType,
+			RangedWeaponType: item.RangedWeaponType,
+			Stats:            item.Stats[:],
+			GemSockets:       item.GemSockets,
+			SocketBonus:      item.SocketBonus[:],
+			WeaponDamageMin:  item.WeaponDamageMin,
+			WeaponDamageMax:  item.WeaponDamageMax,
+			WeaponSpeed:      item.SwingSpeed,
+			SetName:          item.SetName,
+		}
+	}
+	for i, enchantId := range eids {
+		enchant := core.EnchantsByEffectID[enchantId]
+		simDB.Enchants[i] = &proto.SimEnchant{
+			EffectId: enchant.EffectID,
+			Stats:    enchant.Stats[:],
+		}
+	}
+	for i, gemId := range gids {
+		gem := core.GemsByID[gemId]
+		simDB.Gems[i] = &proto.SimGem{
+			Id:    gem.ID,
+			Name:  gem.Name,
+			Color: gem.Color,
+			Stats: gem.Stats[:],
+		}
+	}
+	out, err := protojson.Marshal(simDB)
 	if err != nil {
 		panic(err)
 	}
