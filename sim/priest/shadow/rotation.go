@@ -82,10 +82,10 @@ func (spriest *ShadowPriest) chooseSpellAOE(sim *core.Simulation) (*core.Spell, 
 	}
 
 	for _, t := range sim.Encounter.TargetUnits {
-		if !spriest.ShadowWordPain.Dot(t).IsActive() && sim.GetRemainingDuration().Seconds() > 12 {
+		if !spriest.ShadowWordPain.Dot(t).IsActive() && sim.GetRemainingDuration().Seconds() > 12 && spriest.DevouringPlague.Dot(sim.Encounter.TargetUnits[0]).IsActive() {
 			return spriest.ShadowWordPain, t
 		}
-		if spriest.ShadowWordPain.Dot(t).RemainingDuration(sim).Seconds() < 2 {
+		if spriest.ShadowWordPain.Dot(t).IsActive() && spriest.ShadowWordPain.Dot(t).RemainingDuration(sim).Seconds() < 3 {
 			return spriest.MindFlay[2], t
 		}
 	}
@@ -223,6 +223,10 @@ func (spriest *ShadowPriest) chooseSpellIdeal(sim *core.Simulation) (*core.Spell
 
 	mfDamage = spriest.MindFlay[3].ExpectedDamage(sim, spriest.CurrentTarget)
 	swpTickDamage := spriest.ShadowWordPain.ExpectedDamage(sim, spriest.CurrentTarget)
+
+	//if spriest.rotation.RotationType == 4 {
+	//	msDamage = spriest.MindSear[5].ExpectedDamage(sim, spriest.CurrentTarget)
+	//	}
 
 	// this should be cleaned up, but essentially we want to cast SWP either 3rd or 5th in the rotation which is fight length dependent
 	castSwpNow := 0 // if SW stacks = 3, and we want to get SWP up immediately becaues fight length is low enough, then this flag gets set to 1
@@ -628,8 +632,12 @@ func (spriest *ShadowPriest) chooseSpellIdeal(sim *core.Simulation) (*core.Spell
 		} else if numTicks == 2 && spriest.AllCDs[mbIdx].Seconds() == 0 && spriest.options.UseMindBlast {
 			return spriest.MindBlast, 0
 		} else {
-			//numTicks = 3 // just for testing
-			return spriest.MindFlay[numTicks], 0
+			//numTicks = 3
+			if spriest.rotation.RotationType == 4 {
+				return spriest.MindSear[numTicks], 0
+			} else {
+				return spriest.MindFlay[numTicks], 0
+			}
 		}
 	} else {
 		mbcd := spriest.MindBlast.TimeToReady(sim)
