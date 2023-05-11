@@ -27,6 +27,23 @@ var _active_seed int64 = 1
 var _aura_labels = []string{}
 var _target_aura_labels = []string{}
 
+//export runSim
+func runSim(json *C.char) *C.char {
+	input := &proto.RaidSimRequest{}
+	jsonString := C.GoString(json)
+	err := protojson.Unmarshal([]byte(jsonString), input)
+	if err != nil {
+		log.Fatalf("failed to load input json file: %s", err)
+	}
+	sim.RegisterAll()
+	result := core.RunSim(input, nil)
+	out, err := protojson.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+	return C.CString(string(out))
+}
+
 //export computeStats
 func computeStats(json *C.char) *C.char {
 	input := &proto.ComputeStatsRequest{}
