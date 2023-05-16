@@ -138,7 +138,7 @@ func (dk *DpsDeathknight) weaponSwapCheck(sim *core.Simulation) bool {
 	}
 
 	// Swap if gargoyle will still be on CD for full ICD or if gargoyle is already active
-	shouldSwapBm := dk.ur.bmIcd < sim.CurrentTime && (dk.SummonGargoyle.CD.TimeToReady(sim) > 45*time.Second || dk.HasActiveAura("Summon Gargoyle"))
+	shouldSwapBm := dk.ur.bmIcd < sim.CurrentTime && (dk.SummonGargoyle.CD.TimeToReady(sim) > 45*time.Second || dk.SummonGargoyleAura.IsActive())
 	shouldSwapBackFromBm := dk.HasActiveAura("Black Magic Proc") // || dk.GetAura("Rune Of The Fallen Crusader Proc").RemainingDuration(sim) < 5*time.Second
 
 	if dk.ur.mhSwap == WeaponSwap_BlackMagic {
@@ -381,8 +381,10 @@ func (dk *DpsDeathknight) uhGargoyleCheck(sim *core.Simulation, target *core.Uni
 		dk.ur.activatingGargoyle = true
 		dk.OnGargoyleStartFirstCast = func() {
 			dk.ur.gargoyleSnapshot.ActivateMajorCooldowns(sim)
+			dk.UpdateMajorCooldowns()
 		}
 		dk.ur.gargoyleSnapshot.ActivateMajorCooldowns(sim)
+		dk.UpdateMajorCooldowns()
 		dk.ur.activatingGargoyle = false
 
 		if dk.SummonGargoyle.Cast(sim, target) {
@@ -394,7 +396,7 @@ func (dk *DpsDeathknight) uhGargoyleCheck(sim *core.Simulation, target *core.Uni
 	}
 
 	// Go back to Unholy Presence after Gargoyle
-	if !dk.Rotation.PreNerfedGargoyle && !dk.SummonGargoyle.IsReady(sim) && dk.Rotation.Presence == proto.Deathknight_Rotation_Unholy && dk.Rotation.GargoylePresence == proto.Deathknight_Rotation_Blood && dk.PresenceMatches(deathknight.BloodPresence) && !dk.HasActiveAura("Summon Gargoyle") {
+	if !dk.Rotation.PreNerfedGargoyle && !dk.SummonGargoyle.IsReady(sim) && dk.Rotation.Presence == proto.Deathknight_Rotation_Unholy && dk.Rotation.GargoylePresence == proto.Deathknight_Rotation_Blood && dk.PresenceMatches(deathknight.BloodPresence) && !dk.SummonGargoyleAura.IsActive() {
 		if dk.BloodTapAura.IsActive() {
 			dk.BloodTapAura.Deactivate(sim)
 		}
@@ -402,7 +404,7 @@ func (dk *DpsDeathknight) uhGargoyleCheck(sim *core.Simulation, target *core.Uni
 	}
 
 	// Do not switch presences if gargoyle is still up if it's nerfed gargoyle
-	if !dk.Rotation.PreNerfedGargoyle && dk.HasActiveAura("Summon Gargoyle") {
+	if !dk.Rotation.PreNerfedGargoyle && dk.SummonGargoyleAura.IsActive() {
 		return false
 	}
 

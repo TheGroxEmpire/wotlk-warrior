@@ -56,6 +56,9 @@ const (
 	ProcMaskRangedSpecial
 	ProcMaskSpellDamage
 	ProcMaskSpellHealing
+
+	// Special case where a Proc Can trigger a Proc
+	ProcMaskCanProcFromProc
 )
 
 const (
@@ -193,6 +196,7 @@ const (
 	SpellFlagNoLogs                                         // Disables logs for a spell.
 	SpellFlagAPL                                            // Indicates this spell can be used from an APL rotation.
 	SpellFlagMCD                                            // Indicates this spell is a MajorCooldown.
+	SpellFlagNoOnDamageDealt                                // Disables OnSpellHitDealt and OnPeriodicDamageDealt aura callbacks for this spell.
 
 	// Used to let agents categorize their spells.
 	SpellFlagAgentReserved1
